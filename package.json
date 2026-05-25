@@ -1,0 +1,79 @@
+{
+  "name": "light-my-websocket",
+  "version": "0.0.0",
+  "description": "Like light-my-request, but for WebSockets — synthetic in-process upgrade for testing servers without binding a port.",
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "default": "./build/index.js"
+    }
+  },
+  "files": [
+    "build",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm run typecheck && eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:write": "prettier --write",
+    "types:check": "node scripts/types-check.mjs",
+    "pretest": "pnpm run lint",
+    "test": "tsx --test tests/*.test.ts",
+    "prepublishOnly": "pnpm run build && pnpm test",
+    "version-packages": "changeset version && pnpm run format:write CHANGELOG.md && git add package.json CHANGELOG.md",
+    "release": "pnpm run build && changeset publish",
+    "changeset": "changeset"
+  },
+  "prettier": "@adonisjs/prettier-config",
+  "keywords": [
+    "websocket",
+    "ws",
+    "inject",
+    "testing",
+    "light-my-request"
+  ],
+  "author": "Emelia Smith",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thisismissem/light-my-websocket.git"
+  },
+  "homepage": "https://github.com/thisismissem/light-my-websocket#readme",
+  "bugs": {
+    "url": "https://github.com/thisismissem/light-my-websocket/issues"
+  },
+  "packageManager": "pnpm@10.33.4",
+  "devDependencies": {
+    "@adonisjs/eslint-config": "^3.0.0",
+    "@adonisjs/prettier-config": "^1.4.5",
+    "@adonisjs/tsconfig": "^2.0.0",
+    "@arethetypeswrong/cli": "^0.18.2",
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.31.0",
+    "@types/node": "^25.9.1",
+    "@types/ws": "^8.18.1",
+    "eslint": "^10.4.0",
+    "prettier": "^3.8.3",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "ws": "^8.21.0"
+  },
+  "peerDependencies": {
+    "ws": "^8.21.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "fflate": "0.8.2"
+    }
+  }
+}
