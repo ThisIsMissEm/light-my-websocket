@@ -53,6 +53,10 @@
     "url": "https://github.com/thisismissem/light-my-websocket/issues"
   },
   "packageManager": "pnpm@10.33.4",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "devDependencies": {
     "@adonisjs/eslint-config": "^3.0.0",
     "@adonisjs/prettier-config": "^1.4.5",
@@ -74,6 +78,9 @@
   "pnpm": {
     "overrides": {
       "fflate": "0.8.2"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
