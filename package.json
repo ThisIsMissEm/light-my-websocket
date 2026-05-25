@@ -31,7 +31,7 @@
     "test": "tsx --test tests/*.test.ts",
     "prepublishOnly": "pnpm run build && pnpm test",
     "version-packages": "changeset version && pnpm run format:write CHANGELOG.md && git add package.json CHANGELOG.md",
-    "release": "pnpm run build && changeset publish",
+    "release": "pnpm run build && npm stage publish",
     "changeset": "changeset"
   },
   "prettier": "@adonisjs/prettier-config",
