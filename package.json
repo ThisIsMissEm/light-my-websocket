@@ -1,6 +1,6 @@
 {
   "name": "light-my-websocket",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Like light-my-request, but for WebSockets — synthetic in-process upgrade for testing servers without binding a port.",
   "type": "module",
   "main": "./build/index.js",
