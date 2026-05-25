@@ -45,12 +45,11 @@
   "author": "Emelia Smith",
   "license": "MIT",
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/thisismissem/light-my-websocket.git"
+    "url": "https://github.com/ThisIsMissEm/light-my-websocket"
   },
-  "homepage": "https://github.com/thisismissem/light-my-websocket#readme",
+  "homepage": "https://github.com/ThisIsMissEm/light-my-websocket#readme",
   "bugs": {
-    "url": "https://github.com/thisismissem/light-my-websocket/issues"
+    "url": "https://github.com/ThisIsMissEm/light-my-websocket/issues"
   },
   "packageManager": "pnpm@10.33.4",
   "publishConfig": {
