@@ -1,5 +1,11 @@
 # light-my-websocket
 
+## 0.0.3
+
+### Patch Changes
+
+- [`00bf6aa`](https://github.com/ThisIsMissEm/light-my-websocket/commit/00bf6aa770e9cf029d95e0df06b9e6a884738b0d) Thanks [@ThisIsMissEm](https://github.com/ThisIsMissEm)! - Fix release generation
+
 ## 0.0.2
 
 ### Patch Changes
