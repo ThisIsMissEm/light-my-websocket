@@ -69,7 +69,8 @@
     "prettier": "^3.8.3",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "ws": "^8.21.0"
+    "ws": "^8.21.0",
+    "yalc": "1.0.0-pre.53"
   },
   "peerDependencies": {
     "ws": "^8.21.0"
