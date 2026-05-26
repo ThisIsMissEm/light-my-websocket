@@ -140,6 +140,75 @@ test('chain.catch() handles rejection from a non-101 response', async (t) => {
   assert.match((caught as Error).message, /Unexpected server response: 403/u)
 })
 
+test('chain.toIterable() yields message buffers and ends on close', async (t) => {
+  // Same race the `chain.on() catches frames` test covers, expressed via
+  // iteration. The whole point of routing through the chain: handshake-time
+  // frames land in the queue and survive to the for-await consumer.
+  const { server } = buildServer(t, (ws) => {
+    ws.send('first')
+    ws.send('second')
+    ws.close()
+  })
+
+  const received: string[] = []
+  for await (const chunk of injectWS(server).toIterable()) {
+    received.push(chunk.toString())
+  }
+
+  assert.deepEqual(received, ['first', 'second'])
+})
+
+test('chain.toIterable(transform) yields transformed values', async (t) => {
+  const { server } = buildServer(t, (ws) => {
+    ws.send('1')
+    ws.send('2')
+    ws.send('3')
+    ws.close()
+  })
+
+  const numbers: number[] = []
+  for await (const n of injectWS(server).toIterable((chunk) => Number(chunk.toString()))) {
+    numbers.push(n)
+  }
+
+  assert.deepEqual(numbers, [1, 2, 3])
+})
+
+test('chain.toIterable(transform) supports async transforms', async (t) => {
+  const { server } = buildServer(t, (ws) => {
+    ws.send('hello')
+    ws.send('world')
+    ws.close()
+  })
+
+  const out: string[] = []
+  for await (const s of injectWS(server).toIterable(async (chunk) => {
+    await new Promise((r) => setImmediate(r))
+    return chunk.toString().toUpperCase()
+  })) {
+    out.push(s)
+  }
+
+  assert.deepEqual(out, ['HELLO', 'WORLD'])
+})
+
+test('chain.toIterable() allows early break', async (t) => {
+  const { server } = buildServer(t, (ws) => {
+    ws.send('1')
+    ws.send('2')
+    ws.send('3')
+    setImmediate(() => ws.close())
+  })
+
+  const collected: string[] = []
+  for await (const chunk of injectWS(server).toIterable()) {
+    collected.push(chunk.toString())
+    if (collected.length === 2) break
+  }
+
+  assert.deepEqual(collected, ['1', '2'])
+})
+
 test('chain.finally() runs on success', async (t) => {
   const { server } = buildServer(t)
   let ran = false

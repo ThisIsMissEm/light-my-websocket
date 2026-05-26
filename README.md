@@ -102,6 +102,19 @@ Trigger / promise surface:
 - `.catch(onRejected) → Promise<…>` — sugar over `.connect().catch(...)`.
 - `.finally(onFinally) → Promise<WebSocket>` — sugar over `.connect().finally(...)`.
 
+Iteration surface:
+
+- `.toIterable() → AsyncIterable<Buffer>` — race-safe stream of incoming message buffers. Terminates on `'close'`, throws on `'error'`. Iteration triggers `.connect()` (idempotent), and listeners are queued through the chain so handshake-time frames are caught.
+- `.toIterable(transform) → AsyncIterable<T>` — same, with a per-chunk decoder `(chunk: Buffer) => T | Promise<T>`. Useful for framing protocols (CBOR, JSON, protobuf) so consumers can write `for await (const frame of chain.toIterable(decodeFrame))` instead of wrapping with an outer async generator.
+
+```ts
+const ticks: number[] = []
+for await (const n of injectWS(server, '/feed').toIterable((c) => Number(c.toString()))) {
+  ticks.push(n)
+  if (ticks.length === 3) break
+}
+```
+
 DOM-style `addEventListener` is not exposed on the chain — call it on the connected `WebSocket` after `await`. `.off()` / `.removeListener()` are also not on the chain (it's append-only); detach on the connected `WebSocket` if needed.
 
 A non-101 response rejects the underlying promise with `Error("Unexpected server response: <code>")`.

@@ -99,6 +99,24 @@ export interface WebSocketChain extends PromiseLike<WebSocket> {
   /** Trigger the synthetic upgrade. Idempotent. */
   connect(): Promise<WebSocket>
 
+  /**
+   * Race-safe async iterable over incoming messages. Queues 'message' /
+   * 'close' / 'error' listeners on the chain (same pre-handshake guarantee
+   * as `.on(...)`), terminates on 'close', throws on 'error'. Iteration
+   * itself triggers `.connect()` if it hasn't been called already.
+   *
+   * Message data type is `Buffer` — accurate for the default 'nodebuffer'
+   * binaryType the chain configures.
+   *
+   * With a `transform` argument: each chunk is mapped through `transform`
+   * before yielding. Useful for per-frame decode (e.g. CBOR, JSON,
+   * protobuf) so consumers can write `for await (const frame of
+   * chain.toIterable(decodeFrame))` instead of wrapping with an outer
+   * async generator.
+   */
+  toIterable(): AsyncIterable<Buffer>
+  toIterable<T>(transform: (chunk: Buffer) => T | Promise<T>): AsyncIterable<T>
+
   then<TResult1 = WebSocket, TResult2 = never>(
     onFulfilled?: ((value: WebSocket) => TResult1 | PromiseLike<TResult1>) | null,
     onRejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
@@ -147,6 +165,67 @@ export class WebSocketChainImpl implements WebSocketChain {
 
   connect(): Promise<WebSocket> {
     return (this.#promise ??= this.#runConnect())
+  }
+
+  toIterable<T>(transform?: (chunk: Buffer) => T | Promise<T>): AsyncIterable<T | Buffer> {
+    const queue: Buffer[] = []
+    let done = false
+    let error: Error | undefined
+    let wake: (() => void) | undefined
+    const signal = () => {
+      wake?.()
+      wake = undefined
+    }
+
+    const onMessage = (data: Buffer) => {
+      queue.push(data)
+      signal()
+    }
+    const onClose = () => {
+      done = true
+      signal()
+    }
+    const onError = (err: Error) => {
+      error = err
+      done = true
+      signal()
+    }
+
+    // Queue listeners synchronously — must happen before connect() fires
+    // so the chain replays them BEFORE setSocket attaches the parser. This
+    // is the whole point: even handshake-time frames land in the queue.
+    this.on('message', onMessage)
+    this.on('close', onClose)
+    this.on('error', onError)
+
+    const self = this
+
+    return {
+      async *[Symbol.asyncIterator]() {
+        const ws = await self.connect()
+        try {
+          while (true) {
+            while (queue.length > 0) {
+              const chunk = queue.shift()!
+              yield transform ? await transform(chunk) : chunk
+            }
+            if (done) {
+              if (error) throw error
+              return
+            }
+            await new Promise<void>((resolve) => {
+              wake = resolve
+            })
+          }
+        } finally {
+          // Detach so consumer breaks / throws don't leave dangling listeners
+          // on the live ws (they're already past the queue mechanism by now).
+          ws.off('message', onMessage)
+          ws.off('close', onClose)
+          ws.off('error', onError)
+        }
+      },
+    }
   }
 
   then<TResult1 = WebSocket, TResult2 = never>(
